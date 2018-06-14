@@ -6,6 +6,16 @@ import signal
 
 continue_reading = True
 
+# Server address
+mysql_host = ""
+# MySql username and password
+mysql_user = ""
+mysql_pwd = ""
+db_table = ""
+# Use dictionary {uid: some things(authe?)}
+uid_dic = {}
+
+
 # Open database connection
 def insert_data(host, user, pwd, table, uid_insert):
     db = MySQLdb.connect(host, user, pwd, table)
@@ -28,10 +38,12 @@ def insert_data(host, user, pwd, table, uid_insert):
        # disconnect from server
        db.close()
 
-# Capture SIGINT for cleanup when the script is aborted
+# Capture SIGINT for cleanup when the script is aborted and insert obtained uid to database
 def end_read(signal,frame):
     global continue_reading
-    print "Ctrl+C captured, ending read."
+    for uid_insert in uid_dic.key:
+        insert_data(mysql_host, mysql_user, mysql_pwd, db_table, uid_insert)
+    print "Contacts added and end reading."
     continue_reading = False
     GPIO.cleanup()
 
@@ -63,7 +75,13 @@ while continue_reading:
         # Print UID
         print "Card read UID: %s,%s,%s,%s" % (uid[0], uid[1], uid[2], uid[3])
 
-        # This is the default key for authentication
+        # Use UID as key of the dict
+        # However in fact, we want the real user id rather than tag's uid
+        if not uid in uid_dic:
+            uid_dic[uid] = ""
+
+        # Don't know whether its needed
+        '''# This is the default key for authentication
         key = [0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]
 
         # Select the scanned tag
@@ -77,7 +95,7 @@ while continue_reading:
             MIFAREReader.MFRC522_Read(8)
             MIFAREReader.MFRC522_StopCrypto1()
         else:
-            print "Authentication error"
+            print "Authentication error"'''
 
 
 
