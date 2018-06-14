@@ -12,8 +12,7 @@ mysql_host = ""
 mysql_user = ""
 mysql_pwd = ""
 db_table = ""
-# Use dictionary {uid: some things(authe?)}
-uid_dic = {}
+uid_list = []
 
 
 # Open database connection
@@ -41,8 +40,6 @@ def insert_data(host, user, pwd, table, uid_insert):
 # Capture SIGINT for cleanup when the script is aborted and insert obtained uid to database
 def end_read(signal,frame):
     global continue_reading
-    for uid_insert in uid_dic.key:
-        insert_data(mysql_host, mysql_user, mysql_pwd, db_table, uid_insert)
     print "Contacts added and end reading."
     continue_reading = False
     GPIO.cleanup()
@@ -77,8 +74,9 @@ while continue_reading:
 
         # Use UID as key of the dict
         # However in fact, we want the real user id rather than tag's uid
-        if not uid in uid_dic:
-            uid_dic[uid] = ""
+        if not uid in uid_list:
+            uid_list.append(uid)
+            insert_data(host, user, pwd, table, uid)
 
         # Don't know whether its needed
         '''# This is the default key for authentication
