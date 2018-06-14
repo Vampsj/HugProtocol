@@ -24,7 +24,7 @@ def insert_data(host, user, pwd, table, uid_insert):
 
     # Prepare SQL query to INSERT a record into the database.
     # Example
-    sql = "INSERT INTO EMPLOYEE(FIRST_NAME, LAST_NAME, AGE, SEX, INCOME) VALUES ('%s', '%s', '%d', '%c', '%d' )" %('Mac', 'Mohan', 20, 'M', 2000)
+    # sql = "INSERT INTO EMPLOYEE(FIRST_NAME, LAST_NAME, AGE, SEX, INCOME) VALUES ('%s', '%s', '%d', '%c', '%d' )" %('Mac', 'Mohan', 20, 'M', 2000)
     try:
        # Execute the SQL command
        cursor.execute(sql)
@@ -41,6 +41,8 @@ def insert_data(host, user, pwd, table, uid_insert):
 def end_read(signal,frame):
     global continue_reading
     print "Contacts added and end reading."
+    '''for e in uid_list:
+        print e'''
     continue_reading = False
     GPIO.cleanup()
 
@@ -56,7 +58,8 @@ print "Press Ctrl-C to stop."
 
 
 while continue_reading:
-        # Scan for cards
+    print uid_list.shape
+    # Scan for cards
     (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
 
     # If a card is found
@@ -72,11 +75,28 @@ while continue_reading:
         # Print UID
         print "Card read UID: %s,%s,%s,%s" % (uid[0], uid[1], uid[2], uid[3])
 
+        # This is the default key for authentication
+        key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
+
+        # Select the scanned tag
+        MIFAREReader.MFRC522_SelectTag(uid)
+
+        # Authenticate
+        status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
+
+        # Check if authenticated
+        if status == MIFAREReader.MI_OK:
+            MIFAREReader.MFRC522_Read(8)
+            user_id = MIFAREReader.MFRC522_Read_no_print(8)
+            MIFAREReader.MFRC522_StopCrypto1()
+        else:
+            print "Authentication error"
+
         # Use UID as key of the dict
         # However in fact, we want the real user id rather than tag's uid
-        if not uid in uid_list:
-            uid_list.append(uid)
-            insert_data(host, user, pwd, table, uid)
+        if not user_id in uid_list:
+            uid_list.append(user_id)
+            # insert_data(host, user, pwd, table, uid)
 
         # Don't know whether its needed
         '''# This is the default key for authentication
