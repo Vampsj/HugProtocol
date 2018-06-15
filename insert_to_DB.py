@@ -9,26 +9,27 @@ continue_reading = True
 # source user id
 src_uid = 1
 # Server address
-url = "http://satosugar.php.xdomain.jp/db_write_authenticate.php?src=125&des=145"
+url = "http://satosugar.php.xdomain.jp/db_write_authenticate.php"
 # targed user id list
 uid_list = []
 
 
 def change_to_num(target):
+    target = target[::-1]
     result = 0
     itera = 0
     for i in target:
         result = result + i * pow(10, itera)
         itera = itera + 1
-    return result
+    return int(result)
 
 
 def insert_data(src_id, des_id):
-    para_dict = {"scr":src_id, "des":des_id}
-    print "try to connect"
-    r = requests.get(url)
-    print "connected"
-    r = requests.get(url, params = para_dict)
+    print(uid_list)
+    if src_id == des_id:
+        return
+
+    r = requests.get(url, params= {"src":src_id, "des":des_id})
     print "inserted"
     
 # Capture SIGINT for cleanup when the script is aborted and insert obtained uid to database
@@ -51,8 +52,6 @@ print "Press Ctrl-C to stop."
 
 
 while continue_reading:
-    if not len(uid_list) == 0:
-        print len(uid_list)
     # Scan for cards
     (status, TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
 
@@ -65,7 +64,6 @@ while continue_reading:
 
     # If we have the UID, continue
     if status == MIFAREReader.MI_OK:
-
         # Print UID
         print "Card read UID: %s,%s,%s,%s" % (uid[0], uid[1], uid[2], uid[3])
 
@@ -84,15 +82,18 @@ while continue_reading:
             des_uid = MIFAREReader.MFRC522_Return_Data(8)
             print des_uid
             MIFAREReader.MFRC522_StopCrypto1()
+
+            # Use UID as key of the dict
+            # However in fact, we want the real user id rather than tag's uid
+            print(uid_list)
+            des_uid = change_to_num(des_uid)
+            if des_uid in uid_list:
+                print "Already in list."
+            else:
+                uid_list.append(des_uid)
+                print "\n inserting data"
+                insert_data(src_uid, des_uid)
         else:
             print "Authentication error"
 
-        # Use UID as key of the dict
-        # However in fact, we want the real user id rather than tag's uid
-        if des_uid not in uid_list:
-            des_uid = change_to_num(des_uid)
-            uid_list.append(des_uid)
-            print "\n inserting data"
-            insert_data(src_uid, des_uid)
-        else:
-            print "Already in databse."
+        
