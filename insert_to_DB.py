@@ -6,30 +6,33 @@ import signal
 
 continue_reading = True
 
+src_uid = 1111111111111111
 # Server address
-mysql_host = ""
+mysql_host = "mysql1.php.xdomain.ne.jp"
 # MySql username and password
-mysql_user = ""
-mysql_pwd = ""
-db_table = ""
+mysql_user = "satosugar_sato"
+mysql_pwd = "tsukuba2018"
+mysql_db = "satosugar_hagprotocol"
+mysql_table = "authenticate"
 uid_list = []
 
 
 # Open database connection
-def insert_data(host, user, pwd, table, uid_insert):
-    db = MySQLdb.connect(host, user, pwd, table)
+def insert_data(host, user, pwd, sdb, src_id, des_id):
+    db = MySQLdb.connect(host, user, pwd, sdb)
 
     # prepare a cursor object using cursor() method
     cursor = db.cursor()
 
     # Prepare SQL query to INSERT a record into the database.
     # Example
-    sql = "INSERT INTO EMPLOYEE(FIRST_NAME, LAST_NAME, AGE, SEX, INCOME) VALUES ('%s', '%s', '%d', '%c', '%d' )" %('Mac', 'Mohan', 20, 'M', 2000)
+    sql = "INSERT INTO authenticate(src, des) VALUES ('%d', '%d')" %(src_id, des_id)
     try:
        # Execute the SQL command
        cursor.execute(sql)
        # Commit your changes in the database
        db.commit()
+       print "Successfully insert into database!"
     except:
        # Rollback in case there is any error
        db.rollback()
@@ -56,8 +59,9 @@ print "Press Ctrl-C to stop."
 
 
 while continue_reading:
-        # Scan for cards
-    (status,TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
+    print uid_list.shape
+    # Scan for cards
+    (status, TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
 
     # If a card is found
     if status == MIFAREReader.MI_OK:
@@ -71,16 +75,9 @@ while continue_reading:
 
         # Print UID
         print "Card read UID: %s,%s,%s,%s" % (uid[0], uid[1], uid[2], uid[3])
-	
-        # Use UID as key of the dict
-        # However in fact, we want the real user id rather than tag's uid
-        if not uid in uid_list:
-            uid_list.append(uid)
-            insert_data(host, user, pwd, table, uid)
 
-        # Don't know whether its needed
-        '''# This is the default key for authentication
-        key = [0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]
+        # This is the default key for authentication
+        key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
 
         # Select the scanned tag
         MIFAREReader.MFRC522_SelectTag(uid)
@@ -91,9 +88,27 @@ while continue_reading:
         # Check if authenticated
         if status == MIFAREReader.MI_OK:
             MIFAREReader.MFRC522_Read(8)
+            user_id = MIFAREReader.MFRC522_Read_no_print(8)
+            MIFAREReader.MFRC522_StopCrypto1()
+        else:
+            print "Authentication error"
+
+        # Use UID as key of the dict
+        # However in fact, we want the real user id rather than tag's uid
+        if not user_id in uid_list:
+            uid_list.append(user_id)
+            insert_data(mysql_host, mysql_user, mysql_pwd, mysql_db, src_uid, user_id)
+
+        # Don't know whether its needed
+        '''# This is the default key for authentication
+        key = [0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]
+        # Select the scanned tag
+        MIFAREReader.MFRC522_SelectTag(uid)
+        # Authenticate
+        status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
+        # Check if authenticated
+        if status == MIFAREReader.MI_OK:
+            MIFAREReader.MFRC522_Read(8)
             MIFAREReader.MFRC522_StopCrypto1()
         else:
             print "Authentication error"'''
-
-
-
