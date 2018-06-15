@@ -20,15 +20,16 @@ uid_list = []
 
 def change_to_num(target):
     result = 0
-    iter = 0
+    itera = 0
     for i in target:
-        result = result + i * pow(10, iter)
-        iter = iter + 1
+        result = result + i * pow(10, itera)
+        itera = itera + 1
+    return result
 
 # Open database connection
 def insert_data(host, user, pwd, sdb, src_id, des_id):
     db = MySQLdb.connect(host, user, pwd, sdb)
-
+    print "connected"
     # prepare a cursor object using cursor() method
     cursor = db.cursor()
 
@@ -39,7 +40,7 @@ def insert_data(host, user, pwd, sdb, src_id, des_id):
        # Execute the SQL command
        cursor.execute(sql)
        # Commit your changes in the database
-       db.commit()
+
        print "Successfully insert into database!"
     except:
        # Rollback in case there is any error
@@ -49,7 +50,7 @@ def insert_data(host, user, pwd, sdb, src_id, des_id):
        db.close()
 
 # Capture SIGINT for cleanup when the script is aborted and insert obtained uid to database
-def end_read(signal,frame):
+def end_read(signal,nframe):
     global continue_reading
     print "Contacts added and end reading."
     continue_reading = False
@@ -98,6 +99,7 @@ while continue_reading:
         if status == MIFAREReader.MI_OK:
             MIFAREReader.MFRC522_Read(8)
             user_id = MIFAREReader.MFRC522_Return_Data(8)
+            print user_id
             MIFAREReader.MFRC522_StopCrypto1()
         else:
             print "Authentication error"
@@ -106,7 +108,9 @@ while continue_reading:
         # However in fact, we want the real user id rather than tag's uid
         if not user_id in uid_list:
             user_id = change_to_num(user_id)
+            print user_id
             uid_list.append(user_id)
+            print "\n inserting data"
             insert_data(mysql_host, mysql_user, mysql_pwd, mysql_db, src_uid, user_id)
 
         # Don't know whether its needed
