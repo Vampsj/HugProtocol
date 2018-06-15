@@ -17,6 +17,14 @@ mysql_table = "authenticate"
 uid_list = []
 
 
+
+def change_to_num(target):
+    result = 0
+    iter = 0
+    for i in target:
+        result = result + i * pow(10, iter)
+        iter = iter + 1
+
 # Open database connection
 def insert_data(host, user, pwd, sdb, src_id, des_id):
     db = MySQLdb.connect(host, user, pwd, sdb)
@@ -88,7 +96,7 @@ while continue_reading:
         # Check if authenticated
         if status == MIFAREReader.MI_OK:
             MIFAREReader.MFRC522_Read(8)
-            user_id = MIFAREReader.MFRC522_Read_no_print(8)
+            user_id = MIFAREReader.MFRC522_Return_Data(8)
             MIFAREReader.MFRC522_StopCrypto1()
         else:
             print "Authentication error"
@@ -96,6 +104,7 @@ while continue_reading:
         # Use UID as key of the dict
         # However in fact, we want the real user id rather than tag's uid
         if not user_id in uid_list:
+            user_id = change_to_num(user_id)
             uid_list.append(user_id)
             insert_data(mysql_host, mysql_user, mysql_pwd, mysql_db, src_uid, user_id)
 
