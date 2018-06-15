@@ -67,7 +67,8 @@ print "Press Ctrl-C to stop."
 
 
 while continue_reading:
-    print uid_list.shape
+    if not len(uid_list) == 0:
+        print len(uid_list)
     # Scan for cards
     (status, TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
 
