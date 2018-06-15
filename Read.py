@@ -71,6 +71,7 @@ while continue_reading:
 
         # Authenticate
         status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
+	print status
 
         # Check if authenticated
         if status == MIFAREReader.MI_OK:
