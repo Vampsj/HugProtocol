@@ -7,7 +7,7 @@ import signal
 continue_reading = True
 
 # source user id
-src_uid = 1111111111111111
+src_uid = 1
 # Server address
 url = "http://satosugar.php.xdomain.jp/db_write_authenticate.php?src=125&des=145"
 # targed user id list
@@ -37,6 +37,7 @@ def end_read(signal,nframe):
     print "Contacts added and end reading."
     continue_reading = False
     GPIO.cleanup()
+
 
 # Hook the SIGINT
 signal.signal(signal.SIGINT, end_read)
@@ -90,21 +91,8 @@ while continue_reading:
         # However in fact, we want the real user id rather than tag's uid
         if des_uid not in uid_list:
             des_uid = change_to_num(des_uid)
-            print des_uid
             uid_list.append(des_uid)
             print "\n inserting data"
             insert_data(src_uid, des_uid)
-
-        # Don't know whether its needed
-        '''# This is the default key for authentication
-        key = [0xFF,0xFF,0xFF,0xFF,0xFF,0xFF]
-        # Select the scanned tag
-        MIFAREReader.MFRC522_SelectTag(uid)
-        # Authenticate
-        status = MIFAREReader.MFRC522_Auth(MIFAREReader.PICC_AUTHENT1A, 8, key, uid)
-        # Check if authenticated
-        if status == MIFAREReader.MI_OK:
-            MIFAREReader.MFRC522_Read(8)
-            MIFAREReader.MFRC522_StopCrypto1()
         else:
-            print "Authentication error"'''
+            print "Already in databse."
