@@ -1,37 +1,17 @@
 #!/usr/bin/python
-import MySQLdb
-import mysql.connector
+import requests
 import RPi.GPIO as GPIO
 import MFRC522
 import signal
 
 continue_reading = True
 
+# source user id
 src_uid = 1111111111111111
 # Server address
-mysql_host = "mysql1.php.xdomain.ne.jp"
-# MySql username and password
-mysql_user = "satosugar_sato"
-mysql_pwd = "tsukuba2018"
-mysql_db = "satosugar_hagprotocol"
-mysql_table = "authenticate"
+url = "http://satosugar.php.xdomain.jp/db_write_authenticate.php?src=125&des=145"
+# targed user id list
 uid_list = []
-
-
-
-def insert_data_2 (host, user, pwd, db):
-    mydb = mysql.connector.connect(host, user, pwd, db)
-
-    mycursor = mydb.cursor()
-
-    sql = "INSERT INTO customers (name, address) VALUES (%s, %s)"
-    val = ("John", "Highway 21")
-    mycursor.execute(sql, val)
-
-    mydb.commit()
-}
-print(mycursor.rowsaffected, "record inserted.")
-
 
 
 def change_to_num(target):
@@ -42,30 +22,15 @@ def change_to_num(target):
         itera = itera + 1
     return result
 
-# Open database connection
-def insert_data(host, user, pwd, sdb, src_id, des_id):
+
+def insert_data(src_id, des_id):
+    para_dict = {"scr":src_id, "des":des_id}
     print "try to connect"
-    db = MySQLdb.connect(host, user, pwd, sdb)
+    r = requests.get(url)
     print "connected"
-    # prepare a cursor object using cursor() method
-    cursor = db.cursor()
-
-    # Prepare SQL query to INSERT a record into the database.
-    # Example
-    sql = "INSERT INTO authenticate(src, des) VALUES ('%d', '%d')" %(src_id, des_id)
-    try:
-       # Execute the SQL command
-       cursor.execute(sql)
-       # Commit your changes in the database
-
-       print "Successfully insert into database!"
-    except:
-       # Rollback in case there is any error
-       db.rollback()
-
-       # disconnect from server
-       db.close()
-
+    r = requests.get(url, params = para_dict)
+    print "inserted"
+    
 # Capture SIGINT for cleanup when the script is aborted and insert obtained uid to database
 def end_read(signal,nframe):
     global continue_reading
@@ -115,20 +80,20 @@ while continue_reading:
         # Check if authenticated
         if status == MIFAREReader.MI_OK:
             MIFAREReader.MFRC522_Read(8)
-            user_id = MIFAREReader.MFRC522_Return_Data(8)
-            print user_id
+            des_uid = MIFAREReader.MFRC522_Return_Data(8)
+            print des_uid
             MIFAREReader.MFRC522_StopCrypto1()
         else:
             print "Authentication error"
 
         # Use UID as key of the dict
         # However in fact, we want the real user id rather than tag's uid
-        if not user_id in uid_list:
-            user_id = change_to_num(user_id)
-            print user_id
-            uid_list.append(user_id)
+        if des_uid not in uid_list:
+            des_uid = change_to_num(des_uid)
+            print des_uid
+            uid_list.append(des_uid)
             print "\n inserting data"
-            insert_data(mysql_host, mysql_user, mysql_pwd, mysql_db, src_uid, user_id)
+            insert_data(src_uid, des_uid)
 
         # Don't know whether its needed
         '''# This is the default key for authentication
