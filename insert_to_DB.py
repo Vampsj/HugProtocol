@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import MySQLdb
+import mysql.connector
 import RPi.GPIO as GPIO
 import MFRC522
 import signal
@@ -18,6 +19,21 @@ uid_list = []
 
 
 
+def insert_data_2 (host, user, pwd, db):
+    mydb = mysql.connector.connect(host, user, pwd, db)
+
+    mycursor = mydb.cursor()
+
+    sql = "INSERT INTO customers (name, address) VALUES (%s, %s)"
+    val = ("John", "Highway 21")
+    mycursor.execute(sql, val)
+
+    mydb.commit()
+}
+print(mycursor.rowsaffected, "record inserted.")
+
+
+
 def change_to_num(target):
     result = 0
     itera = 0
@@ -28,6 +44,7 @@ def change_to_num(target):
 
 # Open database connection
 def insert_data(host, user, pwd, sdb, src_id, des_id):
+    print "try to connect"
     db = MySQLdb.connect(host, user, pwd, sdb)
     print "connected"
     # prepare a cursor object using cursor() method
